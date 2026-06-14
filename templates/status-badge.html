@@ -1,0 +1,13 @@
+<template id="tpl-badge">
+  <span class="badge" :class="badgeClass">
+    <i v-if="qty === 0"
+       class="fa-solid fa-circle-xmark"></i>
+    <i v-else-if="qty < safety"
+       class="fa-solid fa-circle-exclamation"></i>
+    <i v-else
+       class="fa-solid fa-circle-check"></i>
+    <span v-if="qty === 0">Kosong</span>
+    <span v-else-if="qty < safety">Menipis</span>
+    <span v-else>Aman</span>
+  </span>
+</template>

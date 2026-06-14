@@ -1,0 +1,17 @@
+<template id="tpl-modal">
+  <div class="modal-overlay" v-if="visible" @click.self="close">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <div class="modal-title danger"><i class="fa-solid fa-triangle-exclamation"></i> &nbsp;{{ title }}</div>
+        <button class="btn btn-close btn-sm" @click="close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px;color:#1a2332;line-height:1.6;">{{ message }}</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" @click="close">Batal</button>
+        <button class="btn btn-danger" @click="confirm"><i class="fa-solid fa-trash"></i> Hapus</button>
+      </div>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,159 @@
+<template id="tpl-tracking">
+  <div>
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;">
+      <div>
+        <div style="margin-bottom:12px;position:relative;">
+          <i class="fa-solid fa-magnifying-glass"
+             style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#aaa;"></i>
+          <input type="text" v-model="searchDO"
+                 placeholder="Cari nomor DO / nama / NIM…"
+                 style="padding-left:32px;"
+                 @keydown="handleSearchKeydown">
+        </div>
+        <div style="font-size:12px;color:#6b7a8d;margin-bottom:10px;">
+          {{ filteredDoList.length }} dari {{ data.length }} DO
+          <span v-if="searchDO" style="color:#7087bb;"> · Tekan <kbd>Esc</kbd> untuk reset</span>
+        </div>
+
+        <div class="empty" v-if="filteredDoList.length === 0">
+          <div class="empty-icon"><i class="fa-solid fa-face-frown no-data-found"></i></div>
+          <div>Tidak ada DO ditemukan.</div>
+        </div>
+
+        <div v-for="doItem in filteredDoList" :key="doItem.nomorDO"
+             class="do-card"
+             :class="{ active: selectedDO && selectedDO.nomorDO === doItem.nomorDO }"
+             @click="selectDO(doItem)">
+          <div class="do-card-header">
+            <span class="do-number" v-text="doItem.nomorDO"></span>
+            <span class="badge" :class="statusBadgeCls(doItem.status)" v-text="doItem.status"></span>
+          </div>
+          <div class="do-meta">
+            <i class="fa-solid fa-user"></i>&nbsp; {{ doItem.nama }} &nbsp;|&nbsp; NIM: {{ doItem.nim }}
+          </div>
+          <div class="do-meta" style="margin-top:2px;">
+            <i class="fa-solid fa-cube"></i>&nbsp; {{ paketNama(doItem.paket) }} &nbsp;|&nbsp; {{ doItem.total | rupiah }}
+          </div>
+          <div class="do-meta" style="margin-top:2px;">
+            <i class="fa-solid fa-calendar-days"></i>&nbsp; {{ doItem.tanggalKirim }}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" v-if="!selectedDO" style="text-align:center;padding:48px;">
+          <div style="font-size:36px;margin-bottom:12px;">📋</div>
+          <div style="color:#6b7a8d;">Pilih Delivery Order untuk melihat detail.</div>
+        </div>
+
+        <div v-if="selectedDO">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+              <div>
+                <div style="font-size:11px;color:#6b7a8d;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Nomor DO</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:#2e3e6d" v-text="selectedDO.nomorDO"></div>
+              </div>
+              <span class="badge" style="font-size:13px;padding:6px 14px;"
+                    :class="statusBadgeCls(selectedDO.status)" v-text="selectedDO.status"></span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+              <div>
+                <div style="font-size:11px;color:#6b7a8d;margin-bottom:3px;">NAMA</div>
+                <div style="font-weight:600;color:#2e3e6d;" v-text="selectedDO.nama"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#6b7a8d;margin-bottom:3px;">NIM</div>
+                <div style="font-family:'JetBrains Mono',monospace;" v-text="selectedDO.nim"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#6b7a8d;margin-bottom:3px;">EKSPEDISI</div>
+                <div v-text="ekspedisiLabel || selectedDO.ekspedisi"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#6b7a8d;margin-bottom:3px;">TANGGAL KIRIM</div>
+                <div v-text="selectedDO.tanggalKirim"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#6b7a8d;margin-bottom:3px;">PAKET</div>
+                <div v-text="paketNama(selectedDO.paket)"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:#6b7a8d;margin-bottom:3px;">TOTAL HARGA</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:500;color:#476bbd">
+                  {{ selectedDO.total | rupiah }}
+                </div>
+              </div>
+            </div>
+
+            <div class="card-title"><i class="fa-solid fa-map-location-dot"></i> Riwayat Perjalanan</div>
+            <div v-if="!selectedDO.perjalanan || selectedDO.perjalanan.length === 0"
+                 style="color:#6b7a8d;font-size:13px;padding:8px 0;">
+              Belum ada riwayat perjalanan.
+            </div>
+            <ul class="timeline">
+              <li class="timeline-item" v-for="(p, idx) in selectedDO.perjalanan" :key="idx">
+                <div class="timeline-dot"></div>
+                <div>
+                  <div class="timeline-time" v-text="p.waktu"></div>
+                  <div class="timeline-text" v-text="p.keterangan"></div>
+                </div>
+              </li>
+            </ul>
+
+            <div style="margin-top:20px;padding-top:18px;border-top:1px solid #e8ecf4;">
+              <div class="card-title" style="margin-bottom:10px;">
+                <i class="fa-solid fa-circle-plus"></i> Tambah Status Perjalanan
+              </div>
+
+              <div v-if="suggestedStatusList.length" style="margin-bottom:10px;">
+                <div style="font-size:11px;color:#6b7a8d;margin-bottom:6px;">
+                  <i class="fa-solid fa-bolt"></i> Rekomendasi:
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  <button
+                    v-for="sug in suggestedStatusList"
+                    :key="sug"
+                    class="btn btn-secondary btn-sm"
+                    style="font-size:11px;padding:3px 10px;"
+                    @click="useSuggestedStatus(sug)"
+                    type="button">
+                    {{ sug }}
+                  </button>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <div style="flex:1;">
+                  <input
+                    id="input-progress"
+                    type="text"
+                    v-model="newKeterangan"
+                    placeholder="Contoh: Tiba di Hub Jakarta, dalam pengiriman ke penerima…"
+                    :class="{ 'input-error': progressError }"
+                    @keydown="handleProgressKeydown">
+                  <div class="error-msg" v-if="progressError" v-text="progressError"></div>
+                  <div v-if="progressSuccess"
+                       style="font-size:12px;color:#56a472;margin-top:4px;">
+                    <i class="fa-solid fa-circle-check"></i> Status berhasil ditambahkan!
+                  </div>
+                </div>
+                <button
+                  class="btn btn-success"
+                  style="white-space:nowrap;margin-top:0;"
+                  @click="addProgress"
+                  type="button"
+                  :disabled="!newKeterangan.trim()">
+                  <i class="fa-solid fa-plus"></i> Tambah
+                </button>
+              </div>
+              <div class="hint" style="margin-top:6px;">
+                Waktu diisi otomatis dari jam lokal. Tekan <kbd>Enter</kbd> untuk menyimpan.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

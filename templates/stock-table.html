@@ -1,0 +1,74 @@
+<template id="tpl-stock">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th @click="emitSort('kode')">
+            Kode / Mata Kuliah
+            <span class="sort-icon" :class="{ active: sortField==='kode' }">{{ sortIcon('kode') }}</span>
+          </th>
+          <th>Kategori</th>
+          <th>UT-Daerah</th>
+          <th>Lokasi Rak</th>
+          <th @click="emitSort('harga')">
+            Harga
+            <span class="sort-icon" :class="{ active: sortField==='harga' }">{{ sortIcon('harga') }}</span>
+          </th>
+          <th @click="emitSort('qty')">
+            Jumlah Stok
+            <span class="sort-icon" :class="{ active: sortField==='qty' }">{{ sortIcon('qty') }}</span>
+          </th>
+          <th>Safety Stok</th>
+          <th>Status (hover = catatan)</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="items.length === 0">
+          <td colspan="9">
+            <div class="empty">
+              <div class="empty-icon"><i class="fa-solid fa-face-frown no-data-found"></i></div>
+              <div>Tidak ada data yang cocok dengan filter.</div>
+            </div>
+          </td>
+        </tr>
+        <tr v-else v-for="item in items" :key="item.kode">
+          <td>
+            <span class="code" v-text="item.kode"></span>
+            <div style="margin-top:4px;font-weight:500;" v-text="item.judul"></div>
+          </td>
+          <td><span class="tag" v-text="item.kategori"></span></td>
+          <td v-text="item.upbjj"></td>
+          <td><span style="font-family:'JetBrains Mono',monospace;font-size:12px;" v-text="item.lokasiRak"></span></td>
+          <td>{{ item.harga | rupiah }}</td>
+          <td>
+            <span :style="{ color: item.qty === 0 ? '#e73952' : item.qty < item.safety ? '#e79455' : '#56a472', fontWeight: '600' }">
+              {{ item.qty | satuanBuah }}
+            </span>
+          </td>
+          <td>{{ item.safety | satuanBuah }}</td>
+          <td>
+            <div class="status-cell"
+                 @mouseenter="item._showTooltip = true"
+                 @mouseleave="item._showTooltip = false">
+              <status-badge :qty="item.qty" :safety="item.safety"></status-badge>
+              <div class="catatan-tooltip" v-show="item._showTooltip && item.catatanHTML">
+                <span v-html="item.catatanHTML"></span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-outline-warning btn-sm" @click="emitEdit(item)" title="Edit">
+                <i class="fa-solid fa-pencil"></i>
+              </button>
+              <button class="btn btn-danger btn-sm" @click="emitDelete(item)" title="Hapus">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>

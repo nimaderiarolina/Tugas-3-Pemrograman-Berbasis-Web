@@ -1,0 +1,87 @@
+<template id="tpl-order">
+  <div class="card" style="max-width:640px;margin:0 auto;">
+    <div class="card-title"><i class="fa-solid fa-truck-fast"></i> Tambah Delivery Order Baru</div>
+
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Nomor DO (otomatis)</label>
+      <input type="text" :value="nextNomorDO" readonly
+             style="background:#fafbff;color:#2563cc;font-family:'JetBrains Mono',monospace;">
+      <div class="hint">Nomor DO di-generate otomatis berdasarkan urutan.</div>
+    </div>
+
+    <div class="form-grid" @keydown="handleKeydown">
+      <div class="form-group">
+        <label class="form-label">NIM <span class="danger">*</span></label>
+        <input type="text" v-model.trim="form.nim" placeholder="cth. 030123456"
+               :class="{ 'input-error': formErrors.nim }">
+        <div class="error-msg" v-if="formErrors.nim" v-text="formErrors.nim"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap <span class="danger">*</span></label>
+        <input type="text" v-model.trim="form.nama" placeholder="cth. Budi Santoso"
+               :class="{ 'input-error': formErrors.nama }">
+        <div class="error-msg" v-if="formErrors.nama" v-text="formErrors.nama"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Jenis Ekspedisi <span class="danger">*</span></label>
+        <select v-model="form.ekspedisi" :class="{ 'input-error': formErrors.ekspedisi }">
+          <option value="">-- Pilih Ekspedisi --</option>
+          <option v-for="p in ekspedisi" :key="p.kode" :value="p.kode">{{ p.nama }}</option>
+        </select>
+        <div class="error-msg" v-if="formErrors.ekspedisi" v-text="formErrors.ekspedisi"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tanggal Kirim <span class="danger">*</span></label>
+        <div style="display:flex;gap:6px;">
+          <input type="date" v-model="form.tanggalKirim"
+                 :class="{ 'input-error': formErrors.tanggalKirim }"
+                 style="flex:1;">
+          <button class="btn btn-secondary btn-sm" @click="useToday" type="button" title="Gunakan hari ini">
+            <i class="fa-solid fa-calendar-day calendar-icon"></i>
+          </button>
+        </div>
+        <div v-if="form.tanggalKirim" style="font-size:11px;color:#7087bb;margin-top:3px;">
+          {{ tanggalFormatted }}
+        </div>
+        <div class="error-msg" v-if="formErrors.tanggalKirim" v-text="formErrors.tanggalKirim"></div>
+      </div>
+
+      <div class="form-group full">
+        <label class="form-label">Paket Bahan Ajar <span class="danger">*</span></label>
+        <select v-model="form.paketKode" :class="{ 'input-error': formErrors.paketKode }">
+          <option value="">-- Pilih Paket --</option>
+          <option v-for="p in paket" :key="p.kode" :value="p.kode">{{ p.kode }} — {{ p.nama }}</option>
+        </select>
+        <div class="error-msg" v-if="formErrors.paketKode" v-text="formErrors.paketKode"></div>
+
+        <div class="paket-detail" v-if="selectedPaketDetail">
+          <strong class="info">{{ selectedPaketDetail.paket.nama }}</strong>
+          <ul>
+            <li v-for="item in selectedPaketDetail.items" :key="item" class="paket-detail-biaya">{{ item }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="form-group full" v-show="form.paketKode">
+        <label class="form-label">Total Harga</label>
+        <input type="text" :value="formTotal | rupiah" readonly
+               style="background:rgba(47,129,247,.07);color:#2a4d88;font-weight:600;font-family:'JetBrains Mono',monospace;">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+      <button class="btn btn-secondary" @click="resetForm" type="button">
+        <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+      </button>
+      <button class="btn btn-success" @click="submitDO" type="button">
+        <i class="fa-solid fa-floppy-disk"></i> Simpan DO
+      </button>
+    </div>
+    <div class="hint" style="margin-top:8px;text-align:right;">
+      Tekan <kbd>Enter</kbd> pada field mana pun untuk langsung menyimpan.
+    </div>
+  </div>
+</template>
